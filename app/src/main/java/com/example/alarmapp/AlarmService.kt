@@ -26,7 +26,9 @@ class AlarmService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        sendBroadcast(Intent("ALARM_TRIGGERED"))
+        val intentTriggered = Intent("ALARM_TRIGGERED")
+        intentTriggered.setPackage(packageName)
+        sendBroadcast(intentTriggered)
         val channelId = "ALARM_SERVICE_CHANNEL"
         val manager = getSystemService(NotificationManager::class.java)
         val channel = NotificationChannel(channelId, "Alarm", NotificationManager.IMPORTANCE_HIGH)

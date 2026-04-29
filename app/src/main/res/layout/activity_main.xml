@@ -9,7 +9,10 @@
         android:id="@+id/layoutSetup"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="48dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:visibility="visible">
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -96,6 +99,7 @@
             android:id="@+id/btnSetAlarm"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:text="Set Alarm"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
