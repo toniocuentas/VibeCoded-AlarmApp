@@ -2,6 +2,7 @@ package com.example.alarmapp
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.media.AudioAttributes
@@ -13,7 +14,16 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 
 class AlarmService : Service() {
+    companion object {
+        var isRunning = false
+    }
+
     private var mediaPlayer: MediaPlayer? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        isRunning = true
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         sendBroadcast(Intent("ALARM_TRIGGERED"))
@@ -22,11 +32,24 @@ class AlarmService : Service() {
         val channel = NotificationChannel(channelId, "Alarm", NotificationManager.IMPORTANCE_HIGH)
         manager.createNotificationChannel(channel)
 
+        val notificationIntent = Intent(this, MainActivity::class.java).apply {
+            setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra("FROM_NOTIFICATION", true)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            notificationIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle("Alarm")
             .setContentText("Ringing...")
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setOngoing(true)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
             .build()
 
         startForeground(1, notification)
@@ -56,6 +79,7 @@ class AlarmService : Service() {
     }
 
     override fun onDestroy() {
+        isRunning = false
         mediaPlayer?.stop()
         mediaPlayer?.release()
         super.onDestroy()

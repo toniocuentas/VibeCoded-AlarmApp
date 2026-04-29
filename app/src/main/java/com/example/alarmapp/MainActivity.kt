@@ -239,6 +239,10 @@ class MainActivity : AppCompatActivity() {
             tvAlarmStatus.text = "No alarm set"
             btnCancelAlarm.visibility = View.GONE
         }
+
+        if (intent?.getBooleanExtra("FROM_NOTIFICATION", false) == true || AlarmService.isRunning) {
+            showRingingView()
+        }
     }
 
     private fun showRingingView() {
