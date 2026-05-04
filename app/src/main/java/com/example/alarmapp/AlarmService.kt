@@ -1,9 +1,11 @@
 package com.example.alarmapp
 
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -12,6 +14,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import java.text.SimpleDateFormat
+import java.util.*
 
 class AlarmService : Service() {
     companion object {
@@ -84,6 +88,49 @@ class AlarmService : Service() {
         isRunning = false
         mediaPlayer?.stop()
         mediaPlayer?.release()
+
+        val prefs = getSharedPreferences("AlarmPrefs", MODE_PRIVATE)
+        val isRepeating = prefs.getBoolean("repeat_daily", false)
+
+        if (isRepeating) {
+            val hour = prefs.getInt("alarm_hour", -1)
+            val minute = prefs.getInt("alarm_minute", -1)
+
+            if (hour != -1 && minute != -1) {
+                val calendar = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, hour)
+                    set(Calendar.MINUTE, minute)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                    add(Calendar.DAY_OF_YEAR, 1) // Always schedule for tomorrow
+                }
+
+                val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val intent = Intent(this, AlarmReceiver::class.java).apply {
+                    putExtra("RINGTONE_URI", prefs.getString("saved_uri", null))
+                }
+
+                val pendingIntent = PendingIntent.getBroadcast(
+                    this,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+
+                val timeString = "Alarm set for: ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(calendar.time)}"
+                prefs.edit().putString("alarm_status_text", timeString).apply()
+            }
+        } else {
+            // If NOT repeating, clear the status text
+            prefs.edit().remove("alarm_status_text").apply()
+        }
+
         super.onDestroy()
     }
 

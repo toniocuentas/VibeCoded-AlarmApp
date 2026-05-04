@@ -71,29 +71,45 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/btnPickFile" />
 
-        <TextView
-            android:id="@+id/tvAlarmStatus"
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switchRepeatDaily"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No alarm set"
-            android:textSize="22sp"
-            android:textStyle="bold"
+            android:layout_marginTop="8dp"
+            android:text="Repeat Daily"
             android:textColor="?attr/colorOnSurface"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/timePicker" />
 
-        <Button
-            android:id="@+id/btnCancelAlarm"
+        <TextView
+            android:id="@+id/tvAlarmStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Cancel Alarm"
-            android:backgroundTint="#757575"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:text="No alarm set"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            app:layout_constraintBottom_toTopOf="@+id/btnSetAlarm"
+            app:layout_constraintEnd_toStartOf="@+id/btnCancelAlarm"
+            app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvAlarmStatus" />
+            app:layout_constraintTop_toBottomOf="@+id/switchRepeatDaily" />
+
+        <ImageButton
+            android:id="@+id/btnCancelAlarm"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:padding="6dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_close_white"
+            android:background="@drawable/circle_button"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/tvAlarmStatus"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/tvAlarmStatus"
+            app:layout_constraintTop_toTopOf="@+id/tvAlarmStatus" />
 
         <Button
             android:id="@+id/btnSetAlarm"

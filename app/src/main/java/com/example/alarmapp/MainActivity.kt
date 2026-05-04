@@ -27,7 +27,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var layoutSetup: View
     private lateinit var layoutRinging: View
     private lateinit var tvAlarmStatus: TextView
-    private lateinit var btnCancelAlarm: Button
+    private lateinit var btnCancelAlarm: android.widget.ImageButton
+    private lateinit var switchRepeatDaily: com.google.android.material.materialswitch.MaterialSwitch
 
     // Receiver to show the STOP circle when the Service starts
     private val alarmStatusReceiver = object : BroadcastReceiver() {
@@ -50,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         layoutRinging = findViewById(R.id.layoutRinging)
         tvAlarmStatus = findViewById(R.id.tvAlarmStatus)
         btnCancelAlarm = findViewById(R.id.btnCancelAlarm)
+        switchRepeatDaily = findViewById(R.id.switchRepeatDaily)
 
         // New variables for the preview feature
         tvFileName = findViewById(R.id.tvFileName)
@@ -102,10 +104,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         // 4. Set Alarm
+        switchRepeatDaily.isChecked = prefs.getBoolean("repeat_daily", false)
+        switchRepeatDaily.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("repeat_daily", isChecked).apply()
+        }
+
         btnSetAlarm.setOnClickListener {
+            val hour = timePicker.hour
+            val minute = timePicker.minute
+
             val calendar = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, timePicker.hour)
-                set(Calendar.MINUTE, timePicker.minute)
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
             }
@@ -119,11 +129,16 @@ class MainActivity : AppCompatActivity() {
             val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
 
-            val timeString = "Alarm set for: ${SimpleDateFormat("HH:mm", Locale.getDefault()).format(calendar.time)}"
+            val timeString = "Alarm set for: ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(calendar.time)}"
             tvAlarmStatus.text = timeString
             btnCancelAlarm.visibility = View.VISIBLE
 
-            prefs.edit().putString("alarm_status_text", timeString).apply()
+            prefs.edit().apply {
+                putString("alarm_status_text", timeString)
+                putInt("alarm_hour", hour)
+                putInt("alarm_minute", minute)
+                apply()
+            }
         }
 
         // 5. Cancel Alarm
@@ -135,7 +150,12 @@ class MainActivity : AppCompatActivity() {
             alarmManager.cancel(pendingIntent)
             showSetupView()
             Toast.makeText(this, "Alarm Cancelled", Toast.LENGTH_SHORT).show()
-            prefs.edit().remove("alarm_status_text").apply()
+            prefs.edit().apply {
+                remove("alarm_status_text")
+                remove("alarm_hour")
+                remove("alarm_minute")
+                apply()
+            }
             tvAlarmStatus.text = "No alarm set"
             btnCancelAlarm.visibility = View.GONE
         }
@@ -144,11 +164,12 @@ class MainActivity : AppCompatActivity() {
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
         val longPressRunnable = Runnable {
             stopService(Intent(this, AlarmService::class.java))
-            showSetupView()
-            Toast.makeText(this, "Alarm Stopped", Toast.LENGTH_SHORT).show()
-            prefs.edit().remove("alarm_status_text").apply()
-            tvAlarmStatus.text = "No alarm set"
-            btnCancelAlarm.visibility = View.GONE
+            
+            // Wait a tiny bit for the Service's onDestroy to clear prefs if needed
+            handler.postDelayed({
+                showSetupView()
+                Toast.makeText(this, "Alarm Stopped", Toast.LENGTH_SHORT).show()
+            }, 100)
         }
 
         @SuppressLint("ClickableViewAccessibility")
@@ -262,8 +283,14 @@ class MainActivity : AppCompatActivity() {
     private fun showSetupView() {
         layoutSetup.visibility = View.VISIBLE
         layoutRinging.visibility = View.GONE
-        tvAlarmStatus.text = "No alarm set"
-        btnCancelAlarm.visibility = View.GONE
+
+        val savedStatus = prefs.getString("alarm_status_text", "No alarm set")
+        tvAlarmStatus.text = savedStatus
+        if (savedStatus != "No alarm set") {
+            btnCancelAlarm.visibility = View.VISIBLE
+        } else {
+            btnCancelAlarm.visibility = View.GONE
+        }
     }
 
     override fun onDestroy() {
